@@ -1,3 +1,43 @@
+
+use yaml_rust::{YamlLoader};
+use std::collections::HashMap;
+
+#[derive(Default, Copy, Clone)]
+struct DispatchEntry {
+    address: u32,
+}
+
+struct Dispatch {
+    entries: [DispatchEntry; 128],
+}
+
+impl Default for Dispatch {
+    fn default() -> Dispatch {
+        Dispatch {
+            entries: [DispatchEntry::default(); 128]
+        }
+    }
+}
+
+use std::fs::File;
+use std::io::Write;
+use std::io;
+use std::path::Path;
+
+impl Dispatch {
+
+    fn write_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
+        let mut file = File::create(path)?;
+        
+        for (index, entry) in self.entries.iter().enumerate() {
+            write!(file, "{} {:x}", index, entry.address)?;
+        }
+
+        Ok(())  
+    }
+
+}
+
 /*
 22 - 23 	PCSource
 21 	PCWrite
@@ -49,6 +89,15 @@ struct Microcode {
 
     dispatch: bool,
     next: bool,
+}
+
+
+impl From<HashMap<String, String>> for Microcode {
+
+    fn from(map: HashMap<String, String>) -> Microcode {
+        Microcode::default()
+    }
+
 }
 
 fn set_bit(value: &mut u32, n: usize, b: bool) {
@@ -160,6 +209,7 @@ impl From<u32> for Microcode {
 
             // 3 - unused
             // 2 - unused
+
             dispatch: is_bit_set(src, 1),
             next: is_bit_set(src, 0),
         }
@@ -171,28 +221,20 @@ impl Into<u32> for Microcode {
         let mut value: u32 = 0;
 
         set_bit_range(&mut value, 22, 23, self.pc_source);
-
         set_bit(&mut value, 21, self.pc_write);
         set_bit(&mut value, 20, self.pc_write_cond);
-
         set_bit_range(&mut value, 16, 19, self.alu_op);
         set_bit(&mut value, 15, self.alu_src_a);
-
         set_bit_range(&mut value, 13, 14, self.alu_src_b);
         set_bit(&mut value, 12, self.ir_write);
-
         set_bit(&mut value, 11, self.i_or_d);
         set_bit(&mut value, 10, self.mem_read);
-
         set_bit(&mut value, 9, self.mem_write);
         set_bit(&mut value, 8, self.mem_to_reg);
-
         set_bit(&mut value, 7, self.reg_dest);
         set_bit(&mut value, 6, self.reg_write);
-
         set_bit(&mut value, 5, self.halt);
         set_bit(&mut value, 4, self.error);
-
         set_bit(&mut value, 1, self.dispatch);
         set_bit(&mut value, 0, self.next);
 
@@ -201,7 +243,14 @@ impl Into<u32> for Microcode {
 }
 
 fn main() {
-    println!("{:#?}", Microcode::from(0b001000100011010000000001));
+
+    let string = std::fs::read_to_string("input.yaml").unwrap();
+
+    let input = YamlLoader::load_from_str(&string).unwrap();
+
+    println!("{:#?}", input);
+
+    //println!("{:#?}", Microcode::from(0b001000100011010000000001));
 }
 
 #[test]
@@ -223,11 +272,10 @@ fn test_output_pc_source() {
 #[test]
 fn example1() {
     let original = 0b001000100011010000000001;
-
     let mcode: Microcode = original.into();
-
+    
     let byte_repr: u32 = mcode.into();
-
+    
     assert_eq!(byte_repr, original);
 }
 
@@ -236,17 +284,9 @@ fn example1() {
 fn example2() {
     let original = 0b100110000000000010;
     let mcode1: Microcode = original.into();
-
-    println!("{:#?}", mcode1);
-
+    
     let byte_repr: u32 = mcode1.clone().into();
-
     let mcode2: Microcode = byte_repr.into();
-
-    println!("{:#?}", mcode2);
-
-    println!("{:024b}", byte_repr);
-    println!("{:024b}", original);
 
     assert_eq!(byte_repr, original);
 }

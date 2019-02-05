@@ -1,0 +1,30 @@
+# John C. Doneth
+
+add:
+    # The first micro instruction
+    - pc-source: 0
+
+    # The second micro instruction
+    - pc-source: 1
+
+    # The third micro instruction
+    - pc-source: 2
+
+addi:
+and:
+andi:
+beq:
+bne:
+halt:
+j:
+jal:
+jr:
+lw:
+lui:
+nor:
+or:
+ori:
+slt:
+slti:
+sw:
+sub:
