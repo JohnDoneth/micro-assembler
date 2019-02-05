@@ -1,4 +1,3 @@
-
 /*
 22 - 23 	PCSource
 21 	PCWrite
@@ -53,7 +52,6 @@ struct Microcode {
 }
 
 fn set_bit(value: &mut u32, n: usize, b: bool) {
-    
     if b {
         (*value) |= 1 << n;
     } else {
@@ -62,12 +60,12 @@ fn set_bit(value: &mut u32, n: usize, b: bool) {
 }
 
 fn set_bit_range(value: &mut u32, start: usize, end: usize, new_value: u8) {
-    let mask = ((1 << (1 + end - start)) - 1);
+    let mask = (1 << (1 + end - start)) - 1;
 
     //println!("mask    {:024b}", mask);
 
     //println!("value   {:024b}", new_value);
-    
+
     let new_value = (new_value as u32) & mask;
 
     let new_value = new_value << end;
@@ -76,9 +74,9 @@ fn set_bit_range(value: &mut u32, start: usize, end: usize, new_value: u8) {
     //println!("s mask  {:024b}", (mask << end) >> (end - start));
 
     //println!("shifted {:024b}", new_value);
-    
+
     //println!("before  {:024b}", value);
-    (*value) |= (new_value);
+    (*value) |= new_value;
 
     //println!("       {:024b}", 0b110000000000000000000000);
     //println!("after   {:024b}\n", value);
@@ -92,47 +90,37 @@ fn is_bit_set(input: u32, n: u8) -> bool {
     }
 }
 
-fn extract_bit_range(value: u32, start: isize, end: isize) -> u8 {
+fn extract_bit_range(value: u32, start: usize, end: usize) -> u8 {
+    assert!(start < end);
 
     let k = end - start + 1;
 
-    let mask = ((1 << k) - 1);
+    let mask = (1 << k) - 1;
 
     let mask = mask << start + 1;
     let mask = mask >> 1;
-    //let mask = mask >> 1;
 
-    println!("mask {:024b}", mask);
+    //println!("mask  {:024b}", mask);
 
-    return (mask & (value >> (start))) as u8; 
+    //println!("value {:024b}", value);
 
-    /*
-    assert!(start < end);
-    
-    let size = end - start + 1;
+    let res = (mask & value) as u32;
 
-    println!("size    {}", size);
-    
-    let mask = (1 << size) - 1;
+    //println!("res   {:024b}\n", res);
 
-    let mask = mask << (start);
+    let shifted_res = res >> start;
 
+    //println!("sres  {:024b}\n", shifted_res);
 
-
-    println!("mask    {:024b}", mask);
-
-    println!("value   {:024b}", value);
-    
-    let res = ((value >> start) & mask);
-
-    println!("res {}", res);
-
-    res as u8*/
+    return shifted_res as u8;
 }
 
 #[test]
 fn test_extract_bit_range() {
-    
+    let bits = 0b0110 as u32;
+    let extracted = extract_bit_range(bits, 2, 3);
+    assert!(extracted == 0b01);
+
     let bits = 0b0110 as u32;
     let extracted = extract_bit_range(bits, 0, 3);
     assert!(extracted == 0b0110);
@@ -142,26 +130,15 @@ fn test_extract_bit_range() {
     assert!(extracted == 0b10);
 
     let bits = 0b0110 as u32;
-    let extracted = extract_bit_range(bits, 3, 4);
-    assert!(extracted == 0b01);
-
-    let bits = 0b0110 as u32;
-    let extracted = extract_bit_range(bits, 2, 3);
+    let extracted = extract_bit_range(bits, 1, 2);
     assert!(extracted == 0b11);
-
-    let bits = 0b11000000000000 as u32;
-    let extracted = extract_bit_range(bits, 13, 14);
-    assert!(extracted == 0b11);
-
 }
 
 impl From<u32> for Microcode {
-
     fn from(src: u32) -> Microcode {
-
         Microcode {
             pc_source: extract_bit_range(src, 22, 23), // 2 bits
-            pc_write: is_bit_set(src, 21), // 1 bit
+            pc_write: is_bit_set(src, 21),             // 1 bit
             pc_write_cond: is_bit_set(src, 20),
 
             alu_op: extract_bit_range(src, 16, 19), // 4 bits
@@ -183,19 +160,14 @@ impl From<u32> for Microcode {
 
             // 3 - unused
             // 2 - unused
-
             dispatch: is_bit_set(src, 1),
-            next: is_bit_set(src, 0), 
+            next: is_bit_set(src, 0),
         }
-
     }
-
 }
 
 impl Into<u32> for Microcode {
-
     fn into(self) -> u32 {
-        
         let mut value: u32 = 0;
 
         set_bit_range(&mut value, 22, 23, self.pc_source);
@@ -225,20 +197,15 @@ impl Into<u32> for Microcode {
         set_bit(&mut value, 0, self.next);
 
         value
-
     }
-
 }
 
 fn main() {
-    
     println!("{:#?}", Microcode::from(0b001000100011010000000001));
-
 }
 
 #[test]
 fn test_output_pc_source() {
-
     let mcode = Microcode {
         pc_source: 3,
         ..Default::default()
@@ -250,16 +217,14 @@ fn test_output_pc_source() {
 
     assert!(is_bit_set(bit_repr, 22));
     assert!(is_bit_set(bit_repr, 23));
-
 }
 
 // 0 223401 # 001000100011010000000001b
 #[test]
 fn example1() {
-
     let original = 0b001000100011010000000001;
 
-    let mcode : Microcode = original.into();
+    let mcode: Microcode = original.into();
 
     let byte_repr: u32 = mcode.into();
 
@@ -269,19 +234,16 @@ fn example1() {
 // 1 026002 # 000000100110000000000010b
 #[test]
 fn example2() {
-
     let original = 0b100110000000000010;
-    let mcode1 : Microcode = original.into();
+    let mcode1: Microcode = original.into();
 
     println!("{:#?}", mcode1);
 
     let byte_repr: u32 = mcode1.clone().into();
 
-    let mcode2 : Microcode = byte_repr.into();
+    let mcode2: Microcode = byte_repr.into();
 
     println!("{:#?}", mcode2);
-
-
 
     println!("{:024b}", byte_repr);
     println!("{:024b}", original);
