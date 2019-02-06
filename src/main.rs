@@ -2,9 +2,40 @@
 use yaml_rust::{YamlLoader};
 use std::collections::HashMap;
 
-#[derive(Default, Copy, Clone)]
+use sugar::*;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref OPCODE_MAP: HashMap<&'static str, usize> = {
+        
+        hashmap!{
+            "add"  => 0x20 + 64,
+            "addi" => 0x08,
+            "and"  => 0x24 + 64,
+            "andi" => 0x0C, 
+            "beq"  => 0x04,
+            "bne"  => 0x05,
+            "halt" => 0x20,
+            "j"    => 0x02,
+            "jal"  => 0x03,
+            "jr"   => 0x08 + 64,
+            "lw"   => 0x23,
+            "lui"  => 0x0F,
+            "nor"  => 0x27 + 64,
+            "or"   => 0x25 + 64,
+            "ori"  => 0x0D,
+            "slt"  => 0x2A + 64,
+            "slti" => 0x0A,
+            "sw"   => 0x2B,
+            "sub"  => 0x22 + 64,
+        }
+
+    };
+}
+
+#[derive(Default, Copy, Clone, Debug)]
 struct DispatchEntry {
-    address: u32,
+    address: usize,
 }
 
 struct Dispatch {
@@ -19,6 +50,18 @@ impl Default for Dispatch {
     }
 }
 
+impl Dispatch {
+
+    fn add_index(&mut self, key: &str, addr: usize) {
+        let index: &usize = OPCODE_MAP.get(key).expect("Invalid index");
+
+        println!("Indexing {} @ {} with address {:x}", key, index, addr);
+
+        self.entries[*index].address = addr;
+    }
+
+}
+
 use std::fs::File;
 use std::io::Write;
 use std::io;
@@ -30,7 +73,7 @@ impl Dispatch {
         let mut file = File::create(path)?;
         
         for (index, entry) in self.entries.iter().enumerate() {
-            write!(file, "{} {:x}", index, entry.address)?;
+            writeln!(file, "0x{:x} 0x{:x}", index, entry.address)?;
         }
 
         Ok(())  
@@ -300,6 +343,8 @@ fn set_flag_bits(src: &str, key: &str, value : &Yaml, flag: &mut u8, bit_length:
             //println!("{} {}", key, n);
             *flag = extract_bit_range(*n as u32, 0, bit_length - 1);
             println!("{} {}", key, flag);
+        } else {
+            println!("Expected integer for {}", key);
         }
     }
 }
@@ -396,27 +441,72 @@ fn main() {
 
     println!("{:#?}", operations);
 
-    collapse_instructions(operations);
+    let instructions = collapse_instructions(operations);
+
+    let dispatch = generate_dispatch(instructions.clone());
+
+    dispatch.write_to_file("dispatch1");
+    
+    write_microcode("microcode", instructions);
     
     //println!("{:#?}", Microcode::from(0b001000100011010000000001));
 }
 
+fn write_microcode<P: AsRef<Path>>(path: P, input: HashMap<String, Vec<Microcode>>) -> io::Result<()> {
+    
+    let mut file = File::create(path)?;
+    
+    let mut addr = 0usize;
+
+    for (key, microcode) in input {
+            
+        for (index, code) in microcode.iter().cloned().enumerate() {
+            let byte_repr: u32 = code.into();
+
+            write!(file, "0x{:x} 0x{:x}", addr, byte_repr);
+            
+            if index == 0 {
+                writeln!(file, " # {} segment", key);
+            } else {
+                writeln!(file, "");
+            }
+            
+            
+            
+            addr += 1;
+        }
+    }
+
+    Ok(())
+
+}
+
+fn generate_dispatch(input: HashMap<String, Vec<Microcode>>) -> Dispatch {
+    let mut dispatch = Dispatch::default();
+
+    let mut addr = 0usize;
+
+    for (key, microcode) in input {
+        
+        dispatch.add_index(&key, addr);
+        
+        for code in microcode {
+            addr += 1;
+        }
+    }
+
+    dispatch
+
+}
+
 fn collapse_instructions(instructions: HashMap<String, Vec<Yaml>>) -> HashMap<String, Vec<Microcode>> {
 
-    let output = instructions.iter().map(|(key, value)|{
+    instructions.iter().map(|(key, value)|{
 
         let microcode : Vec<Microcode> = value.iter().map(Microcode::from).collect();
 
         (key.clone(), microcode)
-    }).collect();
-
-    for (key, value) in instructions {
-
-        
-
-    } 
-
-    output
+    }).collect()
 
 }
 
