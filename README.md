@@ -1,6 +1,8 @@
-# Micro-Assembler
+# Micro Assembler
 
-Compiles the following yaml to microcode with an associated dispatch file.
+Project to ease work while working on [this homework assignment](https://cis.gvsu.edu/~kurmasz/Teaching/Courses/W19/CIS451/Homework/MicrocodeForPHMultiCycleCPU/)
+
+This project is able to compile the following yaml to microcode with an associated dispatch file with comments.
 
 ```yaml
 add:
