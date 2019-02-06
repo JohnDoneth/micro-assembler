@@ -1,37 +1,16 @@
-
-use yaml_rust::{YamlLoader};
 use std::collections::HashMap;
+use yaml_rust::YamlLoader;
 
-use sugar::*;
-use lazy_static::lazy_static;
+use std::fs::File;
+use std::io;
+use std::io::Write;
+use std::path::Path;
 
-lazy_static! {
-    static ref OPCODE_MAP: HashMap<&'static str, usize> = {
-        
-        hashmap!{
-            "add"  => 0x20 + 64,
-            "addi" => 0x08,
-            "and"  => 0x24 + 64,
-            "andi" => 0x0C, 
-            "beq"  => 0x04,
-            "bne"  => 0x05,
-            "halt" => 0x20,
-            "j"    => 0x02,
-            "jal"  => 0x03,
-            "jr"   => 0x08 + 64,
-            "lw"   => 0x23,
-            "lui"  => 0x0F,
-            "nor"  => 0x27 + 64,
-            "or"   => 0x25 + 64,
-            "ori"  => 0x0D,
-            "slt"  => 0x2A + 64,
-            "slti" => 0x0A,
-            "sw"   => 0x2B,
-            "sub"  => 0x22 + 64,
-        }
+mod bits;
+use bits::*;
 
-    };
-}
+mod constants;
+use constants::*;
 
 #[derive(Default, Copy, Clone, Debug)]
 struct DispatchEntry {
@@ -45,13 +24,12 @@ struct Dispatch {
 impl Default for Dispatch {
     fn default() -> Dispatch {
         Dispatch {
-            entries: [DispatchEntry::default(); 128]
+            entries: [DispatchEntry::default(); 128],
         }
     }
 }
 
 impl Dispatch {
-
     fn add_index(&mut self, key: &str, addr: usize) {
         let index: &usize = OPCODE_MAP.get(key).expect("Invalid index");
 
@@ -59,54 +37,43 @@ impl Dispatch {
 
         self.entries[*index].address = addr;
     }
-
 }
 
-use std::fs::File;
-use std::io::Write;
-use std::io;
-use std::path::Path;
-
 impl Dispatch {
-
     fn write_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let mut file = File::create(path)?;
-        
+
         for (index, entry) in self.entries.iter().enumerate() {
             writeln!(file, "0x{:x} 0x{:x}", index, entry.address)?;
         }
 
-        Ok(())  
+        Ok(())
     }
-
 }
 
-/*
-22 - 23 	PCSource
-21 	PCWrite
-20 	PCWriteCond
-    
-16-19 	ALUop
-    
-15 	ALUSrcA
-13 - 14 	ALUSrcB
-12 	IRWrite
-    
-11 	IorD
-10 	MemRead
-9 	MemWrite
-8 	MemToReg
-    
-7 	RegDest
-6 	RegWrite
-5 	Halt
-4 	Error
-    
-3 	unused
-2 	unused
-1 	dispatch
-0 	next
-*/
+/// Microcode
+/// ---------
+/// Bytes
+/// 22 - 23 	PCSource
+/// 21 	PCWrite
+/// 20 	PCWriteCond
+/// 16-19 	ALUop
+/// 15 	ALUSrcA
+/// 13 - 14 	ALUSrcB
+/// 12 	IRWrite
+/// 11 	IorD
+/// 10 	MemRead
+/// 9 	MemWrite
+/// 8 	MemToReg
+/// 7 	RegDest
+/// 6 	RegWrite
+/// 5 	Halt
+/// 4 	Error
+/// 3 	unused
+/// 2 	unused
+/// 1 	dispatch
+/// 0 	next
+///
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 struct Microcode {
     pc_source: u8, // 2 bits
@@ -134,96 +101,10 @@ struct Microcode {
     next: bool,
 }
 
-
 impl From<HashMap<String, String>> for Microcode {
-
     fn from(map: HashMap<String, String>) -> Microcode {
         Microcode::default()
     }
-
-}
-
-fn set_bit(value: &mut u32, n: usize, b: bool) {
-    if b {
-        (*value) |= 1 << n;
-    } else {
-        (*value) &= !(1 << n);
-    }
-}
-
-fn set_bit_range(value: &mut u32, start: usize, end: usize, new_value: u8) {
-    let mask = (1 << (1 + end - start)) - 1;
-
-    //println!("mask    {:024b}", mask);
-
-    //println!("value   {:024b}", new_value);
-
-    let new_value = (new_value as u32) & mask;
-
-    let new_value = new_value << end;
-    let new_value = new_value >> (end - start);
-
-    //println!("s mask  {:024b}", (mask << end) >> (end - start));
-
-    //println!("shifted {:024b}", new_value);
-
-    //println!("before  {:024b}", value);
-    (*value) |= new_value;
-
-    //println!("       {:024b}", 0b110000000000000000000000);
-    //println!("after   {:024b}\n", value);
-}
-
-fn is_bit_set(input: u32, n: u8) -> bool {
-    if n < 32 {
-        input & (1 << n) != 0
-    } else {
-        false
-    }
-}
-
-fn extract_bit_range(value: u32, start: usize, end: usize) -> u8 {
-    assert!(start < end);
-
-    let k = end - start + 1;
-
-    let mask = (1 << k) - 1;
-
-    let mask = mask << start + 1;
-    let mask = mask >> 1;
-
-    //println!("mask  {:024b}", mask);
-
-    //println!("value {:024b}", value);
-
-    let res = (mask & value) as u32;
-
-    //println!("res   {:024b}\n", res);
-
-    let shifted_res = res >> start;
-
-    //println!("sres  {:024b}\n", shifted_res);
-
-    return shifted_res as u8;
-}
-
-#[test]
-fn test_extract_bit_range() {
-    let bits = 0b0110 as u32;
-    let extracted = extract_bit_range(bits, 2, 3);
-    assert!(extracted == 0b01);
-
-    let bits = 0b0110 as u32;
-    let extracted = extract_bit_range(bits, 0, 3);
-    assert!(extracted == 0b0110);
-
-    let bits = 0b0110 as u32;
-    let extracted = extract_bit_range(bits, 0, 1);
-    assert!(extracted == 0b10);
-
-    let bits = 0b0110 as u32;
-    let extracted = extract_bit_range(bits, 1, 2);
-    assert!(extracted == 0b11);
 }
 
 impl From<u32> for Microcode {
@@ -252,7 +133,6 @@ impl From<u32> for Microcode {
 
             // 3 - unused
             // 2 - unused
-
             dispatch: is_bit_set(src, 1),
             next: is_bit_set(src, 0),
         }
@@ -278,6 +158,10 @@ impl Into<u32> for Microcode {
         set_bit(&mut value, 6, self.reg_write);
         set_bit(&mut value, 5, self.halt);
         set_bit(&mut value, 4, self.error);
+
+        // 3 - unused
+        // 2 - unused
+
         set_bit(&mut value, 1, self.dispatch);
         set_bit(&mut value, 0, self.next);
 
@@ -286,9 +170,7 @@ impl Into<u32> for Microcode {
 }
 
 impl From<&Yaml> for Microcode {
-
     fn from(hash: &Yaml) -> Self {
-
         let hash = hash.clone().into_hash().unwrap();
 
         let mut microcode = Microcode::default();
@@ -305,14 +187,13 @@ impl From<&Yaml> for Microcode {
 
         for (key, value) in hash {
             if let Yaml::String(ref key_str) = key {
-
                 set_flag_bits(key_str, "pc-source", &value, &mut microcode.pc_source, 2);
                 set_flag_bits(key_str, "alu-op", &value, &mut microcode.alu_op, 4);
                 set_flag_bits(key_str, "alu-src-b", &value, &mut microcode.pc_source, 2);
 
                 set_flag_if_true(key_str, "pc-write", &mut microcode.pc_write);
                 set_flag_if_true(key_str, "pc-write-cond", &mut microcode.pc_write_cond);
-                
+
                 set_flag_if_true(key_str, "alu-src-a", &mut microcode.alu_src_a);
                 set_flag_if_true(key_str, "ir-write", &mut microcode.ir_write);
                 set_flag_if_true(key_str, "i-or-d", &mut microcode.i_or_d);
@@ -324,20 +205,16 @@ impl From<&Yaml> for Microcode {
 
                 set_flag_if_true(key_str, "halt", &mut microcode.halt);
                 set_flag_if_true(key_str, "error", &mut microcode.error);
-
             }
         }
-        
+
         microcode
-
     }
-
 }
 
-fn set_flag_bits(src: &str, key: &str, value : &Yaml, flag: &mut u8, bit_length: usize) {
-    
+fn set_flag_bits(src: &str, key: &str, value: &Yaml, flag: &mut u8, bit_length: usize) {
     assert!(VALID_BITS.contains(&key));
-    
+
     if src == key {
         if let Yaml::Integer(ref n) = value {
             //println!("{} {}", key, n);
@@ -350,62 +227,17 @@ fn set_flag_bits(src: &str, key: &str, value : &Yaml, flag: &mut u8, bit_length:
 }
 
 fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
-    
     assert!(VALID_BITS.contains(&key));
-    
+
     if src == key {
         *flag = true;
     }
 }
 
-
-const VALID_BITS: &'static [&'static str] = &[
-    "pc-source",
-    "pc-write",
-    "pc-write-cond",
-    "alu-op",
-    "alu-src-a",
-    "alu-src-b",
-    "ir-write",
-    "i-or-d",
-    "mem-read",
-    "mem-write",
-    "mem-to-reg",
-    "reg-dest",
-    "reg-write",
-    "halt",
-    "error",
-    "slt",
-    "slti",
-];
-
-const VALID_OPERATIONS: &'static [&'static str] = &[
-    "add",
-    "addi",
-    "and",
-    "andi",
-    "beq",
-    "bne",
-    "halt",
-    "j",
-    "jal",
-    "jr",
-    "lw",
-    "lui",
-    "nor",
-    "or",
-    "ori",
-    "slt",
-    "slti",
-    "sw",
-    "sub",
-];
-
-use yaml_rust::Yaml;
 use yaml_rust::yaml::Hash;
+use yaml_rust::Yaml;
 
 fn main() {
-
     let string = std::fs::read_to_string("input.yaml").unwrap();
 
     let input = YamlLoader::load_from_str(&string).unwrap();
@@ -414,7 +246,10 @@ fn main() {
 
     let input = &input[0];
 
-    let hash = input.clone().into_hash().expect("Error: Root value must be a HashMap");
+    let hash = input
+        .clone()
+        .into_hash()
+        .expect("Error: Root value must be a HashMap");
 
     let mut operations = HashMap::new();
 
@@ -422,17 +257,18 @@ fn main() {
         match key {
             Yaml::String(ref string) => {
                 if VALID_OPERATIONS.contains(&string.as_str()) {
-
                     if let Yaml::Array(array_val) = value {
                         operations.insert(string.clone(), array_val);
                     } else {
-                        eprintln!("Warning: Unexpected value for instruction '{}'. Found '{:?}' instead.", string, value);
+                        eprintln!(
+                            "Warning: Unexpected value for instruction '{}'. Found '{:?}' instead.",
+                            string, value
+                        );
                     }
-
                 } else {
                     eprintln!("Warning: Invalid key: {}", string)
                 }
-            },
+            }
             _ => {
                 eprintln!("Warning: Unexpected item '{:?}'", key);
             }
@@ -446,39 +282,35 @@ fn main() {
     let dispatch = generate_dispatch(instructions.clone());
 
     dispatch.write_to_file("dispatch1");
-    
+
     write_microcode("microcode", instructions);
-    
-    //println!("{:#?}", Microcode::from(0b001000100011010000000001));
 }
 
-fn write_microcode<P: AsRef<Path>>(path: P, input: HashMap<String, Vec<Microcode>>) -> io::Result<()> {
-    
+fn write_microcode<P: AsRef<Path>>(
+    path: P,
+    input: HashMap<String, Vec<Microcode>>,
+) -> io::Result<()> {
     let mut file = File::create(path)?;
-    
+
     let mut addr = 0usize;
 
     for (key, microcode) in input {
-            
         for (index, code) in microcode.iter().cloned().enumerate() {
             let byte_repr: u32 = code.into();
 
             write!(file, "0x{:x} 0x{:x}", addr, byte_repr);
-            
+
             if index == 0 {
                 writeln!(file, " # {} segment", key);
             } else {
                 writeln!(file, "");
             }
-            
-            
-            
+
             addr += 1;
         }
     }
 
     Ok(())
-
 }
 
 fn generate_dispatch(input: HashMap<String, Vec<Microcode>>) -> Dispatch {
@@ -487,27 +319,27 @@ fn generate_dispatch(input: HashMap<String, Vec<Microcode>>) -> Dispatch {
     let mut addr = 0usize;
 
     for (key, microcode) in input {
-        
         dispatch.add_index(&key, addr);
-        
+
         for code in microcode {
             addr += 1;
         }
     }
 
     dispatch
-
 }
 
-fn collapse_instructions(instructions: HashMap<String, Vec<Yaml>>) -> HashMap<String, Vec<Microcode>> {
+fn collapse_instructions(
+    instructions: HashMap<String, Vec<Yaml>>,
+) -> HashMap<String, Vec<Microcode>> {
+    instructions
+        .iter()
+        .map(|(key, value)| {
+            let microcode: Vec<Microcode> = value.iter().map(Microcode::from).collect();
 
-    instructions.iter().map(|(key, value)|{
-
-        let microcode : Vec<Microcode> = value.iter().map(Microcode::from).collect();
-
-        (key.clone(), microcode)
-    }).collect()
-
+            (key.clone(), microcode)
+        })
+        .collect()
 }
 
 #[test]
@@ -530,9 +362,9 @@ fn test_output_pc_source() {
 fn example1() {
     let original = 0b001000100011010000000001;
     let mcode: Microcode = original.into();
-    
+
     let byte_repr: u32 = mcode.into();
-    
+
     assert_eq!(byte_repr, original);
 }
 
@@ -541,7 +373,7 @@ fn example1() {
 fn example2() {
     let original = 0b100110000000000010;
     let mcode1: Microcode = original.into();
-    
+
     let byte_repr: u32 = mcode1.clone().into();
     let mcode2: Microcode = byte_repr.into();
 
