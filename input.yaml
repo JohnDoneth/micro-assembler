@@ -3,12 +3,15 @@
 add:
     # The first micro instruction
     - pc-source: 0
+      pc-write: true
+      alu-op: 2
 
     # The second micro instruction
     - pc-source: 1
 
     # The third micro instruction
     - pc-source: 2
+      mem-write: true
 
 addi:
 and:
@@ -28,3 +31,5 @@ slt:
 slti:
 sw:
 sub:
+
+hello:

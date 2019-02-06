@@ -242,6 +242,123 @@ impl Into<u32> for Microcode {
     }
 }
 
+impl From<&Yaml> for Microcode {
+
+    fn from(hash: &Yaml) -> Self {
+
+        let hash = hash.clone().into_hash().unwrap();
+
+        let mut microcode = Microcode::default();
+
+        for key in hash.keys() {
+            if let Yaml::String(ref key_str) = key {
+                if !VALID_BITS.contains(&key_str.as_str()) {
+                    println!("Warning: Undefined setting {}", key_str);
+                }
+            } else {
+                println!("#TODO - Invalid type");
+            }
+        }
+
+        for (key, value) in hash {
+            if let Yaml::String(ref key_str) = key {
+
+                set_flag_bits(key_str, "pc-source", &value, &mut microcode.pc_source, 2);
+                set_flag_bits(key_str, "alu-op", &value, &mut microcode.alu_op, 4);
+                set_flag_bits(key_str, "alu-src-b", &value, &mut microcode.pc_source, 2);
+
+                set_flag_if_true(key_str, "pc-write", &mut microcode.pc_write);
+                set_flag_if_true(key_str, "pc-write-cond", &mut microcode.pc_write_cond);
+                
+                set_flag_if_true(key_str, "alu-src-a", &mut microcode.alu_src_a);
+                set_flag_if_true(key_str, "ir-write", &mut microcode.ir_write);
+                set_flag_if_true(key_str, "i-or-d", &mut microcode.i_or_d);
+                set_flag_if_true(key_str, "mem-read", &mut microcode.mem_read);
+                set_flag_if_true(key_str, "mem-write", &mut microcode.mem_write);
+                set_flag_if_true(key_str, "mem-to-reg", &mut microcode.mem_to_reg);
+                set_flag_if_true(key_str, "reg-dest", &mut microcode.reg_dest);
+                set_flag_if_true(key_str, "reg-write", &mut microcode.reg_write);
+
+                set_flag_if_true(key_str, "halt", &mut microcode.halt);
+                set_flag_if_true(key_str, "error", &mut microcode.error);
+
+            }
+        }
+        
+        microcode
+
+    }
+
+}
+
+fn set_flag_bits(src: &str, key: &str, value : &Yaml, flag: &mut u8, bit_length: usize) {
+    
+    assert!(VALID_BITS.contains(&key));
+    
+    if src == key {
+        if let Yaml::Integer(ref n) = value {
+            //println!("{} {}", key, n);
+            *flag = extract_bit_range(*n as u32, 0, bit_length - 1);
+            println!("{} {}", key, flag);
+        }
+    }
+}
+
+fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
+    
+    assert!(VALID_BITS.contains(&key));
+    
+    if src == key {
+        *flag = true;
+    }
+}
+
+
+const VALID_BITS: &'static [&'static str] = &[
+    "pc-source",
+    "pc-write",
+    "pc-write-cond",
+    "alu-op",
+    "alu-src-a",
+    "alu-src-b",
+    "ir-write",
+    "i-or-d",
+    "mem-read",
+    "mem-write",
+    "mem-to-reg",
+    "reg-dest",
+    "reg-write",
+    "halt",
+    "error",
+    "slt",
+    "slti",
+];
+
+const VALID_OPERATIONS: &'static [&'static str] = &[
+    "add",
+    "addi",
+    "and",
+    "andi",
+    "beq",
+    "bne",
+    "halt",
+    "j",
+    "jal",
+    "jr",
+    "lw",
+    "lui",
+    "nor",
+    "or",
+    "ori",
+    "slt",
+    "slti",
+    "sw",
+    "sub",
+];
+
+use yaml_rust::Yaml;
+use yaml_rust::yaml::Hash;
+
 fn main() {
 
     let string = std::fs::read_to_string("input.yaml").unwrap();
@@ -250,7 +367,57 @@ fn main() {
 
     println!("{:#?}", input);
 
+    let input = &input[0];
+
+    let hash = input.clone().into_hash().expect("Error: Root value must be a HashMap");
+
+    let mut operations = HashMap::new();
+
+    for (key, value) in hash {
+        match key {
+            Yaml::String(ref string) => {
+                if VALID_OPERATIONS.contains(&string.as_str()) {
+
+                    if let Yaml::Array(array_val) = value {
+                        operations.insert(string.clone(), array_val);
+                    } else {
+                        eprintln!("Warning: Unexpected value for instruction '{}'. Found '{:?}' instead.", string, value);
+                    }
+
+                } else {
+                    eprintln!("Warning: Invalid key: {}", string)
+                }
+            },
+            _ => {
+                eprintln!("Warning: Unexpected item '{:?}'", key);
+            }
+        }
+    }
+
+    println!("{:#?}", operations);
+
+    collapse_instructions(operations);
+    
     //println!("{:#?}", Microcode::from(0b001000100011010000000001));
+}
+
+fn collapse_instructions(instructions: HashMap<String, Vec<Yaml>>) -> HashMap<String, Vec<Microcode>> {
+
+    let output = instructions.iter().map(|(key, value)|{
+
+        let microcode : Vec<Microcode> = value.iter().map(Microcode::from).collect();
+
+        (key.clone(), microcode)
+    }).collect();
+
+    for (key, value) in instructions {
+
+        
+
+    } 
+
+    output
+
 }
 
 #[test]
