@@ -44,7 +44,7 @@ impl Dispatch {
         let mut file = File::create(path)?;
 
         for (index, entry) in self.entries.iter().enumerate() {
-            writeln!(file, "0x{:x} 0x{:x}", index, entry.address)?;
+            writeln!(file, "{:x} {:x}", index, entry.address)?;
         }
 
         Ok(())
@@ -298,7 +298,7 @@ fn write_microcode<P: AsRef<Path>>(
         for (index, code) in microcode.iter().cloned().enumerate() {
             let byte_repr: u32 = code.into();
 
-            write!(file, "0x{:x} 0x{:x}", addr, byte_repr);
+            write!(file, "{:x} {:x}", addr, byte_repr);
 
             if index == 0 {
                 writeln!(file, " # {} segment", key);
