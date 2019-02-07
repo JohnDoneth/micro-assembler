@@ -1,3 +1,8 @@
+use yaml_rust::Yaml;
+use log::*;
+
+use crate::constants::VALID_BITS;
+
 pub fn set_bit(value: &mut u32, n: usize, b: bool) {
     if b {
         (*value) |= 1 << n;
@@ -60,6 +65,28 @@ pub fn extract_bit_range(value: u32, start: usize, end: usize) -> u8 {
     //println!("sres  {:024b}\n", shifted_res);
 
     shifted_res as u8
+}
+
+pub fn set_flag_bits(src: &str, key: &str, value: &Yaml, flag: &mut u8, bit_length: usize) {
+    assert!(VALID_BITS.contains(&key));
+
+    if src == key {
+        if let Yaml::Integer(ref n) = value {
+            //println!("{} {}", key, n);
+            *flag = extract_bit_range(*n as u32, 0, bit_length - 1);
+            debug!("{} {}", key, flag);
+        } else {
+            error!("Expected integer for {}", key);
+        }
+    }
+}
+
+pub fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
+    assert!(VALID_BITS.contains(&key));
+
+    if src == key {
+        *flag = true;
+    }
 }
 
 #[test]
