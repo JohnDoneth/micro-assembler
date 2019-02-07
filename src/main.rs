@@ -1,19 +1,16 @@
-use std::collections::HashMap;
+mod bits;
+mod constants;
+mod micro;
 
+use constants::*;
+use micro::*;
+
+use std::collections::HashMap;
 use yaml_rust::YamlLoader;
 use yaml_rust::Yaml;
-
 use clap::*;
 use simple_logger;
 use log::*;
-
-mod bits;
-
-mod constants;
-use constants::*;
-
-mod micro;
-use micro::*;
 
 fn main() {
     let matches = App::new("Micro Assembler")

@@ -231,6 +231,7 @@ pub fn write_microcode<P: AsRef<Path>>(
         // Remove the "next" directive from the last microcode instruction
         if let Some(ref mut last) = microcode.iter_mut().last() {
             last.next = false;
+            last.dispatch = true;
         }
 
         // Output the microcode
