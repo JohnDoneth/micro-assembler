@@ -13,7 +13,7 @@ pub fn set_bit_range(value: &mut u32, start: usize, end: usize, new_value: u8) {
 
     //println!("value   {:024b}", new_value);
 
-    let new_value = (new_value as u32) & mask;
+    let new_value = u32::from(new_value) & mask;
 
     let new_value = new_value << end;
     let new_value = new_value >> (end - start);
@@ -44,7 +44,7 @@ pub fn extract_bit_range(value: u32, start: usize, end: usize) -> u8 {
 
     let mask = (1 << k) - 1;
 
-    let mask = mask << start + 1;
+    let mask = mask << (start + 1);
     let mask = mask >> 1;
 
     //println!("mask  {:024b}", mask);
@@ -59,7 +59,7 @@ pub fn extract_bit_range(value: u32, start: usize, end: usize) -> u8 {
 
     //println!("sres  {:024b}\n", shifted_res);
 
-    return shifted_res as u8;
+    shifted_res as u8
 }
 
 #[test]

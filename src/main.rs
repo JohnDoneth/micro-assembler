@@ -101,11 +101,13 @@ struct Microcode {
     next: bool,
 }
 
+/*
 impl From<HashMap<String, String>> for Microcode {
     fn from(map: HashMap<String, String>) -> Microcode {
         Microcode::default()
     }
 }
+*/
 
 impl From<u32> for Microcode {
     fn from(src: u32) -> Microcode {
@@ -234,7 +236,6 @@ fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
     }
 }
 
-use yaml_rust::yaml::Hash;
 use yaml_rust::Yaml;
 
 fn main() {
@@ -281,9 +282,13 @@ fn main() {
 
     let dispatch = generate_dispatch(instructions.clone());
 
-    dispatch.write_to_file("dispatch1");
+    if let Err(e) = dispatch.write_to_file("dispatch1") {
+        println!("Failed to write to the output dispatch file: {:?}", e);
+    }
 
-    write_microcode("microcode", instructions);
+    if let Err(e) = write_microcode("microcode", instructions) {
+        println!("Failed to write to the output microcode file: {:?}", e);
+    }
 }
 
 fn write_microcode<P: AsRef<Path>>(
@@ -294,16 +299,27 @@ fn write_microcode<P: AsRef<Path>>(
 
     let mut addr = 0usize;
 
-    for (key, microcode) in input {
+    for (key, mut microcode) in input {
+        // Add the "next" directive to all microcode instructions
+        for code in microcode.iter_mut() {
+            code.next = true;
+        }
+
+        // Remove the "next" directive from the last microcode instruction
+        if let Some(ref mut last) = microcode.iter_mut().last() {
+            last.next = false;
+        }
+
+        // Output the microcode
         for (index, code) in microcode.iter().cloned().enumerate() {
             let byte_repr: u32 = code.into();
 
-            write!(file, "{:x} {:x}", addr, byte_repr);
+            write!(file, "{:x} {:x}", addr, byte_repr)?;
 
             if index == 0 {
-                writeln!(file, " # {} segment", key);
+                writeln!(file, " # {} segment", key)?;
             } else {
-                writeln!(file, "");
+                writeln!(file)?;
             }
 
             addr += 1;
@@ -321,7 +337,7 @@ fn generate_dispatch(input: HashMap<String, Vec<Microcode>>) -> Dispatch {
     for (key, microcode) in input {
         dispatch.add_index(&key, addr);
 
-        for code in microcode {
+        for _ in microcode {
             addr += 1;
         }
     }
