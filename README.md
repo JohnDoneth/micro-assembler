@@ -64,7 +64,7 @@ The above yaml file produces the following dispatch and microcode files.
 Dispatch
 
 ```hex
-... omited ...
+... omitted ...
 0x5d 0x0
 0x5e 0x0
 0x5f 0x0
@@ -72,7 +72,7 @@ Dispatch
 0x61 0x0
 0x62 0x0
 0x63 0x0
-... omited ...
+... omitted ...
 ```
 
 Microcode
