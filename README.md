@@ -10,7 +10,7 @@ John Doneth <doneth7@gmail.com>
 Tool to aid in compiling microcode for CIS 451 homework
 
 USAGE:
-    micro-assembler.exe [OPTIONS]
+    micro-assembler [OPTIONS]
 
 FLAGS:
     -h, --help       Prints help information
