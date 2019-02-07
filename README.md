@@ -4,6 +4,26 @@ Project to ease work while working on [this homework assignment](https://cis.gvs
 
 [Downloads](https://github.com/JohnDoneth/micro-assembler/releases/latest)
 
+```man
+Micro Assembler 0.2.0
+John Doneth <doneth7@gmail.com>
+Tool to aid in compiling microcode for CIS 451 homework
+
+USAGE:
+    micro-assembler.exe [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -d, --dispatch-output <dispatch>      Sets the file to output dispatch to [default: dispatch1]
+    -i, --input <input>                   Sets the input file to use [default: input.yaml]
+    -m, --microcode-output <microcode>    Sets the file to output microcode to [default: microcode]
+    -v <verbosity>                        Sets the level of verbosity [default: warn]  [possible values: disabled, info,
+                                          warn, debug, error, trace]
+```
+
 This project is able to compile the following yaml to microcode with an associated dispatch file with comments.
 
 ```yaml
