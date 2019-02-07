@@ -191,7 +191,7 @@ impl From<&Yaml> for Microcode {
             if let Yaml::String(ref key_str) = key {
                 set_flag_bits(key_str, "pc-source", &value, &mut microcode.pc_source, 2);
                 set_flag_bits(key_str, "alu-op", &value, &mut microcode.alu_op, 4);
-                set_flag_bits(key_str, "alu-src-b", &value, &mut microcode.pc_source, 2);
+                set_flag_bits(key_str, "alu-src-b", &value, &mut microcode.alu_src_b, 2);
 
                 set_flag_if_true(key_str, "pc-write", &mut microcode.pc_write);
                 set_flag_if_true(key_str, "pc-write-cond", &mut microcode.pc_write_cond);
@@ -236,6 +236,9 @@ pub fn write_microcode<P: AsRef<Path>>(
 
         // Output the microcode
         for (index, code) in microcode.iter().cloned().enumerate() {
+            
+            debug!("{:#?}", code);
+            
             let byte_repr: u32 = code.into();
 
             write!(file, "{:x} {:x}", addr, byte_repr)?;
