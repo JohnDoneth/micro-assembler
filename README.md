@@ -1,5 +1,7 @@
 # Micro Assembler
 
+[![Build Status](https://travis-ci.org/JohnDoneth/micro-assembler.svg?branch=master)](https://travis-ci.org/JohnDoneth/micro-assembler)
+
 Project to ease work while working on [this homework assignment](https://cis.gvsu.edu/~kurmasz/Teaching/Courses/W19/CIS451/Homework/MicrocodeForPHMultiCycleCPU/) for course CIS 451 at GVSU.
 
 [Downloads](https://github.com/JohnDoneth/micro-assembler/releases/latest)
@@ -86,7 +88,7 @@ Microcode
 5 800200
 ```
 
------
+---
 
 Tips:
 
@@ -94,7 +96,7 @@ There's a special "instruction" called "default" that will always be placed at 0
 
 ```yaml
 default:
-  - # Some instructions here
-  - # ...
-  - # ...
+  -  # Some instructions here
+  -  # ...
+  -  # ...
 ```
