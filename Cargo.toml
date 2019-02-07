@@ -1,6 +1,6 @@
 [package]
 name = "micro-assembler"
-version = "0.2.0"
+version = "0.2.1"
 description = "Tool to aid in compiling microcode for CIS 451 homework"
 authors = ["John Doneth <doneth7@gmail.com>"]
 edition = "2018"

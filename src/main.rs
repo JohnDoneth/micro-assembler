@@ -300,9 +300,21 @@ fn main() {
     let dispatch_filename = matches.value_of("dispatch").unwrap();
     let microcode_filename = matches.value_of("microcode").unwrap();
 
-    let string = std::fs::read_to_string(input_filename).unwrap();
+    let string = match std::fs::read_to_string(input_filename) {
+        Ok(res) => res,
+        Err(e) => {
+            error!("Failed to open input file: {:?}", e);
+            return;
+        }
+    };
 
-    let input = YamlLoader::load_from_str(&string).unwrap();
+    let input = match YamlLoader::load_from_str(&string) {
+        Ok(res) => res,
+        Err(e) => {
+            error!("Failed parse input file: {:?}", e);
+            return;
+        }
+    };
 
     debug!("{:#?}", input);
 
