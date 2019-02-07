@@ -224,7 +224,7 @@ pub fn write_microcode<P: AsRef<Path>>(
 
     let mut addr = 0usize;
 
-    for (key, microcode) in input.iter_mut() {
+    for (_key, microcode) in input.iter_mut() {
         // Add the "next" directive to all microcode instructions
         for code in microcode.iter_mut() {
             code.next = true;
@@ -258,7 +258,7 @@ pub fn write_microcode<P: AsRef<Path>>(
         }
     }
 
-    for (key, mut microcode) in input {
+    for (key, microcode) in input {
 
         // Output the microcode
         for (index, code) in microcode.iter().cloned().enumerate() {
@@ -285,7 +285,15 @@ pub fn write_microcode<P: AsRef<Path>>(
 pub fn generate_dispatch(input: HashMap<String, Vec<Microcode>>) -> Dispatch {
     let mut dispatch = Dispatch::default();
 
+    let mut input = input.clone();
+
     let mut addr = 0usize;
+
+    if let Some(default) = input.remove("default") {
+        for _ in default {
+            addr += 1;
+        }
+    }
 
     for (key, microcode) in input {
         dispatch.add_index(&key, addr);
