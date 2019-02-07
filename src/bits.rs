@@ -81,11 +81,21 @@ pub fn set_flag_bits(src: &str, key: &str, value: &Yaml, flag: &mut u8, bit_leng
     }
 }
 
-pub fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
+pub fn set_flag_if_true(src: &str, key: &str, value: &Yaml, flag: &mut bool) {
     assert!(VALID_BITS.contains(&key));
 
     if src == key {
-        *flag = true;
+        if let Yaml::Boolean(ref b) = value {
+            *flag = *b;
+        }
+        if let Yaml::Integer(ref n) = value {
+            if *n == 0 {
+                *flag = false;
+            }
+            else if *n == 1 {
+                *flag = true;
+            }
+        }
     }
 }
 

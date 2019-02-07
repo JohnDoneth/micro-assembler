@@ -193,20 +193,20 @@ impl From<&Yaml> for Microcode {
                 set_flag_bits(key_str, "alu-op", &value, &mut microcode.alu_op, 4);
                 set_flag_bits(key_str, "alu-src-b", &value, &mut microcode.alu_src_b, 2);
 
-                set_flag_if_true(key_str, "pc-write", &mut microcode.pc_write);
-                set_flag_if_true(key_str, "pc-write-cond", &mut microcode.pc_write_cond);
+                set_flag_if_true(key_str, "pc-write", &value, &mut microcode.pc_write);
+                set_flag_if_true(key_str, "pc-write-cond", &value, &mut microcode.pc_write_cond);
 
-                set_flag_if_true(key_str, "alu-src-a", &mut microcode.alu_src_a);
-                set_flag_if_true(key_str, "ir-write", &mut microcode.ir_write);
-                set_flag_if_true(key_str, "i-or-d", &mut microcode.i_or_d);
-                set_flag_if_true(key_str, "mem-read", &mut microcode.mem_read);
-                set_flag_if_true(key_str, "mem-write", &mut microcode.mem_write);
-                set_flag_if_true(key_str, "mem-to-reg", &mut microcode.mem_to_reg);
-                set_flag_if_true(key_str, "reg-dest", &mut microcode.reg_dest);
-                set_flag_if_true(key_str, "reg-write", &mut microcode.reg_write);
+                set_flag_if_true(key_str, "alu-src-a", &value, &mut microcode.alu_src_a);
+                set_flag_if_true(key_str, "ir-write", &value, &mut microcode.ir_write);
+                set_flag_if_true(key_str, "i-or-d", &value, &mut microcode.i_or_d);
+                set_flag_if_true(key_str, "mem-read", &value, &mut microcode.mem_read);
+                set_flag_if_true(key_str, "mem-write", &value, &mut microcode.mem_write);
+                set_flag_if_true(key_str, "mem-to-reg", &value, &mut microcode.mem_to_reg);
+                set_flag_if_true(key_str, "reg-dest", &value, &mut microcode.reg_dest);
+                set_flag_if_true(key_str, "reg-write", &value, &mut microcode.reg_write);
 
-                set_flag_if_true(key_str, "halt", &mut microcode.halt);
-                set_flag_if_true(key_str, "error", &mut microcode.error);
+                set_flag_if_true(key_str, "halt", &value, &mut microcode.halt);
+                set_flag_if_true(key_str, "error", &value, &mut microcode.error);
             }
         }
 
