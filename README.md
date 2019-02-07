@@ -2,6 +2,8 @@
 
 Project to ease work while working on [this homework assignment](https://cis.gvsu.edu/~kurmasz/Teaching/Courses/W19/CIS451/Homework/MicrocodeForPHMultiCycleCPU/) for course CIS 451 at GVSU.
 
+[Downloads](https://github.com/JohnDoneth/micro-assembler/releases/latest)
+
 This project is able to compile the following yaml to microcode with an associated dispatch file with comments.
 
 ```yaml
