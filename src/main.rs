@@ -238,7 +238,44 @@ fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
 
 use yaml_rust::Yaml;
 
+use clap::*;
+
 fn main() {
+    let matches = App::new("Micro Assembler")
+        .version(crate_version!())
+        .author(crate_authors!())
+        .about(crate_description!())
+        .arg(
+            Arg::with_name("input")
+                .short("i")
+                .long("input")
+                .help("Sets the input file to use")
+                .default_value("input.yaml")
+        )
+        .arg(
+            Arg::with_name("dispatch")
+                .short("d")
+                .long("dispatch-output")
+                .help("Sets the file to output dispatch to")
+                .default_value("dispatch1")
+        )
+        .arg(
+            Arg::with_name("microcode")
+                .short("m")
+                .long("microcode-output")
+                .help("Sets the file to output microcode to")
+                .default_value("microcode")
+        )
+        .arg(
+            Arg::with_name("v")
+                .short("v")
+                .multiple(true)
+                .help("Sets the level of verbosity"),
+        )
+        .get_matches();
+
+    println!("{:?}", matches);
+
     let string = std::fs::read_to_string("input.yaml").unwrap();
 
     let input = YamlLoader::load_from_str(&string).unwrap();

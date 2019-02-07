@@ -1,6 +1,7 @@
 [package]
 name = "micro-assembler"
-version = "0.1.0"
+version = "0.2.0"
+description = "Tool to aid in compiling microcode for CIS 451 homework"
 authors = ["John Doneth <doneth7@gmail.com>"]
 edition = "2018"
 
@@ -8,3 +9,4 @@ edition = "2018"
 yaml-rust = "0.4.2"
 lazy_static = "1.2.0"
 sugar = "0.2.0"
+clap = "2.32.0"
