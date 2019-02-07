@@ -272,7 +272,7 @@ fn main() {
             Arg::with_name("verbosity")
                 .short("v")
                 .takes_value(true)
-                .possible_values(&["disabled", "warn", "debug", "error", "trace"])
+                .possible_values(&["disabled", "info", "warn", "debug", "error", "trace"])
                 .default_value("warn")
                 .help("Sets the level of verbosity"),
         )
@@ -282,6 +282,7 @@ fn main() {
 
     let log_level = match verbosity {
         "disabled" => None,
+        "info" => Some(Level::Info),
         "warn" => Some(Level::Warn),
         "debug" => Some(Level::Debug),
         "error" => Some(Level::Error),
