@@ -33,7 +33,7 @@ impl Dispatch {
     fn add_index(&mut self, key: &str, addr: usize) {
         let index: &usize = OPCODE_MAP.get(key).expect("Invalid index");
 
-        println!("Indexing {} @ {} with address {:x}", key, index, addr);
+        debug!("Indexing {} @ {} with address {:x}", key, index, addr);
 
         self.entries[*index].address = addr;
     }
@@ -180,10 +180,10 @@ impl From<&Yaml> for Microcode {
         for key in hash.keys() {
             if let Yaml::String(ref key_str) = key {
                 if !VALID_BITS.contains(&key_str.as_str()) {
-                    println!("Warning: Undefined setting {}", key_str);
+                    warn!("Undefined setting {}", key_str);
                 }
             } else {
-                println!("#TODO - Invalid type");
+                warn!("#TODO - Invalid type");
             }
         }
 
@@ -221,9 +221,9 @@ fn set_flag_bits(src: &str, key: &str, value: &Yaml, flag: &mut u8, bit_length: 
         if let Yaml::Integer(ref n) = value {
             //println!("{} {}", key, n);
             *flag = extract_bit_range(*n as u32, 0, bit_length - 1);
-            println!("{} {}", key, flag);
+            debug!("{} {}", key, flag);
         } else {
-            println!("Expected integer for {}", key);
+            error!("Expected integer for {}", key);
         }
     }
 }
@@ -239,6 +239,8 @@ fn set_flag_if_true(src: &str, key: &str, flag: &mut bool) {
 use yaml_rust::Yaml;
 
 use clap::*;
+use simple_logger;
+use log::*;
 
 fn main() {
     let matches = App::new("Micro Assembler")
@@ -267,20 +269,41 @@ fn main() {
                 .default_value("microcode")
         )
         .arg(
-            Arg::with_name("v")
+            Arg::with_name("verbosity")
                 .short("v")
-                .multiple(true)
+                .takes_value(true)
+                .possible_values(&["disabled", "warn", "debug", "error", "trace"])
+                .default_value("warn")
                 .help("Sets the level of verbosity"),
         )
         .get_matches();
 
-    println!("{:?}", matches);
+    let verbosity = matches.value_of("verbosity").unwrap();
 
-    let string = std::fs::read_to_string("input.yaml").unwrap();
+    let log_level = match verbosity {
+        "disabled" => None,
+        "warn" => Some(Level::Warn),
+        "debug" => Some(Level::Debug),
+        "error" => Some(Level::Error),
+        "trace" => Some(Level::Trace),
+        _ => None
+    };
+
+    if let Some(level) = log_level {
+        simple_logger::init_with_level(level).unwrap();
+    }
+
+    trace!("{:?}", matches);
+
+    let input_filename = matches.value_of("input").unwrap();
+    let dispatch_filename = matches.value_of("dispatch").unwrap();
+    let microcode_filename = matches.value_of("microcode").unwrap();
+
+    let string = std::fs::read_to_string(input_filename).unwrap();
 
     let input = YamlLoader::load_from_str(&string).unwrap();
 
-    println!("{:#?}", input);
+    debug!("{:#?}", input);
 
     let input = &input[0];
 
@@ -298,33 +321,33 @@ fn main() {
                     if let Yaml::Array(array_val) = value {
                         operations.insert(string.clone(), array_val);
                     } else {
-                        eprintln!(
-                            "Warning: Unexpected value for instruction '{}'. Found '{:?}' instead.",
+                        warn!(
+                            "Unexpected value for instruction '{}'. Found '{:?}' instead.",
                             string, value
                         );
                     }
                 } else {
-                    eprintln!("Warning: Invalid key: {}", string)
+                    warn!("Unknown instruction: {}", string)
                 }
             }
             _ => {
-                eprintln!("Warning: Unexpected item '{:?}'", key);
+                warn!("Unexpected item '{:?}'", key);
             }
         }
     }
 
-    println!("{:#?}", operations);
+    debug!("{:#?}", operations);
 
     let instructions = collapse_instructions(operations);
 
     let dispatch = generate_dispatch(instructions.clone());
 
-    if let Err(e) = dispatch.write_to_file("dispatch1") {
-        println!("Failed to write to the output dispatch file: {:?}", e);
+    if let Err(e) = dispatch.write_to_file(dispatch_filename) {
+        error!("Failed to write to the output dispatch file: {:?}", e);
     }
 
-    if let Err(e) = write_microcode("microcode", instructions) {
-        println!("Failed to write to the output microcode file: {:?}", e);
+    if let Err(e) = write_microcode(microcode_filename, instructions) {
+        error!("Failed to write to the output microcode file: {:?}", e);
     }
 }
 
