@@ -85,3 +85,16 @@ Microcode
 4 400001
 5 800200
 ```
+
+-----
+
+Tips:
+
+There's a special "instruction" called "default" that will always be placed at 0x0 in the microcode file, it might come in handy.
+
+```yaml
+default:
+  - # Some instructions here
+  - # ...
+  - # ...
+```

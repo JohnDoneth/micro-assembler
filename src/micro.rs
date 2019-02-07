@@ -31,11 +31,13 @@ impl Default for Dispatch {
 
 impl Dispatch {
     fn add_index(&mut self, key: &str, addr: usize) {
-        let index: &usize = OPCODE_MAP.get(key).expect("Invalid index");
+        if key != "default" {
+            let index: &usize = OPCODE_MAP.get(key).expect("Invalid index");
 
-        debug!("Indexing {} @ {} with address {:x}", key, index, addr);
+            debug!("Indexing {} @ {} with address {:x}", key, index, addr);
 
-        self.entries[*index].address = addr;
+            self.entries[*index].address = addr;
+        }
     }
 }
 
@@ -216,13 +218,13 @@ impl From<&Yaml> for Microcode {
 
 pub fn write_microcode<P: AsRef<Path>>(
     path: P,
-    input: HashMap<String, Vec<Microcode>>,
+    mut input: HashMap<String, Vec<Microcode>>,
 ) -> io::Result<()> {
     let mut file = File::create(path)?;
 
     let mut addr = 0usize;
 
-    for (key, mut microcode) in input {
+    for (key, microcode) in input.iter_mut() {
         // Add the "next" directive to all microcode instructions
         for code in microcode.iter_mut() {
             code.next = true;
@@ -233,6 +235,30 @@ pub fn write_microcode<P: AsRef<Path>>(
             last.next = false;
             last.dispatch = true;
         }
+    }
+
+
+    if let Some(default) = input.remove("default") {
+            
+        for (index, code) in default.iter().cloned().enumerate() {
+            
+            debug!("{:#?}", code);
+            
+            let byte_repr: u32 = code.into();
+
+            write!(file, "{:x} {:x}", addr, byte_repr)?;
+
+            if index == 0 {
+                writeln!(file, " # default segment")?;
+            } else {
+                writeln!(file)?;
+            }
+
+            addr += 1;
+        }
+    }
+
+    for (key, mut microcode) in input {
 
         // Output the microcode
         for (index, code) in microcode.iter().cloned().enumerate() {

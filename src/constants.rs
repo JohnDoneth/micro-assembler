@@ -50,5 +50,5 @@ pub const VALID_BITS: &[&str] = &[
 
 pub const VALID_OPERATIONS: &[&str] = &[
     "add", "addi", "and", "andi", "beq", "bne", "halt", "j", "jal", "jr", "lw", "lui", "nor", "or",
-    "ori", "slt", "slti", "sw", "sub",
+    "ori", "slt", "slti", "sw", "sub", "default",
 ];
