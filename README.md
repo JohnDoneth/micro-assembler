@@ -1,7 +1,8 @@
 # Micro Assembler
 
-[![Build Status](https://travis-ci.org/JohnDoneth/micro-assembler.svg?branch=master)](https://travis-ci.org/JohnDoneth/micro-assembler)
-[![Build status](https://ci.appveyor.com/api/projects/status/vom68xyy5oe4ot3c/branch/master?svg=true)](https://ci.appveyor.com/project/JohnDoneth/micro-assembler/branch/master)
+![](https://img.shields.io/travis/JohnDoneth/micro-assembler/master.svg?style=flat-square) ![](https://img.shields.io/appveyor/ci/JohnDoneth/micro-assembler/master.svg?style=flat-square) ![](https://img.shields.io/github/license/JohnDoneth/micro-assembler.svg?style=flat-square) ![](https://img.shields.io/badge/Supported%20Platforms-Windows%2C%20Linux%2C%20Mac%20OS%20X-blue.svg?style=flat-square)
+
+
 
 Project to ease work while working on [this homework assignment](https://cis.gvsu.edu/~kurmasz/Teaching/Courses/W19/CIS451/Homework/MicrocodeForPHMultiCycleCPU/) for course CIS 451 at GVSU.
 
@@ -83,10 +84,10 @@ Microcode
 ```hex
 0 220001 # add segment
 1 400001
-2 800200
+2 800202
 3 220001 # addi segment
 4 400001
-5 800200
+5 800202
 ```
 
 ---
