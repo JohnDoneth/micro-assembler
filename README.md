@@ -1,6 +1,6 @@
 # Micro Assembler
 
-![](https://img.shields.io/travis/JohnDoneth/micro-assembler/master.svg?style=flat-square) ![](https://img.shields.io/appveyor/ci/JohnDoneth/micro-assembler/master.svg?style=flat-square) ![](https://img.shields.io/github/license/JohnDoneth/micro-assembler.svg?style=flat-square) ![](https://img.shields.io/badge/Supported%20Platforms-Windows%2C%20Linux%2C%20Mac%20OS%20X-blue.svg?style=flat-square)
+![](https://img.shields.io/travis/JohnDoneth/micro-assembler/master.svg?style=flat-square) ![](https://img.shields.io/appveyor/ci/JohnDoneth/micro-assembler/master.svg?style=flat-square) ![](https://img.shields.io/github/license/JohnDoneth/micro-assembler.svg?style=flat-square) ![https://github.com/JohnDoneth/micro-assembler/releases/latest](https://img.shields.io/badge/Supported%20Platforms-Windows%2C%20Linux%2C%20Mac%20OS%20X-blue.svg?style=flat-square)
 
 
 
