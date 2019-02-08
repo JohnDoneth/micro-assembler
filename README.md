@@ -1,6 +1,7 @@
 # Micro Assembler
 
 [![Build Status](https://travis-ci.org/JohnDoneth/micro-assembler.svg?branch=master)](https://travis-ci.org/JohnDoneth/micro-assembler)
+[![Build status](https://ci.appveyor.com/api/projects/status/vom68xyy5oe4ot3c/branch/master?svg=true)](https://ci.appveyor.com/project/JohnDoneth/micro-assembler/branch/master)
 
 Project to ease work while working on [this homework assignment](https://cis.gvsu.edu/~kurmasz/Teaching/Courses/W19/CIS451/Homework/MicrocodeForPHMultiCycleCPU/) for course CIS 451 at GVSU.
 
